@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Infrastructure/Dockerfile.backend
+    container_name: invisible-cafeteria-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - EDGE_PRIVACY_SHIELD=true
+    networks:
+      - cafeteria-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: Infrastructure/Dockerfile.frontend
+    container_name: invisible-cafeteria-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cafeteria-network
+
+networks:
+  cafeteria-network:
+    driver: bridge
+
